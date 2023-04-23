@@ -179,9 +179,10 @@ function Row1() {
 function Row2() {
   const targets = useAppSelector((s) => s.game.targets);
   const guesses = useAppSelector((s) => s.game.guesses);
+  const autosolves = useAppSelector((s) => s.game.autosolves);
   const gameOver = useAppSelector((s) => s.game.gameOver);
   const boardsCompleted = useMemo(
-    () => getCompletedBoardsCount(targets, guesses),
+    () => getCompletedBoardsCount(targets, guesses, autosolves),
     [guesses, targets]
   );
   const challenge = useAppSelector((s) => s.game.challenge);

@@ -163,11 +163,15 @@ function getShareableText(
       if (j !== 0) {
         text += " ";
       }
+
       const guessIndex = guesses.indexOf(targets[idx]);
-      if (guessIndex === -1) {
+      const autosolveIndex = autosolves[idx];
+      const solvedIndex = Math.max(guessIndex, autosolveIndex);
+
+      if (solvedIndex === -1) {
         text += "🟥🟥";
       } else {
-        text += numToEmoji(guessIndex + 1);
+        text += numToEmoji(solvedIndex + 1);
       }
     }
     text += "\n";

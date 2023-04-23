@@ -205,12 +205,11 @@ export function getCompletedBoards(
 // Returns the number of boards that are completed
 export function getCompletedBoardsCount(
   targets: string[],
-  guesses: string[]
+  guesses: string[],
+  autosolves: number[],
 ): number {
-  return targets.reduce(
-    (a, target) => a + (guesses.includes(target) ? 1 : 0),
-    0
-  );
+  return getCompletedBoards(targets, guesses, autosolves)
+      .map(b => b ? 1 : 0).reduce((a: number, b: number) => a + b, 0);
 }
 
 // Check if every target word has been guessed

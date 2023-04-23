@@ -105,7 +105,7 @@ function DailyLink(props: DailyLinkProps) {
   const colors = getAllGuessColors(targets, guesses);
   const deductions = getAllDeductions(guesses, colors);
   const autosolves = getAllAutosolves(colors, deductions);
-  const boardsComplete = getCompletedBoardsCount(targets, guesses);
+  const boardsComplete = getCompletedBoardsCount(targets, guesses, autosolves);
   const gameOver = getIsGameOver(targets, guesses, autosolves, props.challenge);
 
   return (
