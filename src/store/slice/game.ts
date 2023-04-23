@@ -1,5 +1,6 @@
 import { createAction, createReducer } from "@reduxjs/toolkit";
 import {
+  addHistoryEntry,
   getAllGuessColors,
   getAllDeductions,
   getAllAutosolves,
@@ -14,10 +15,9 @@ import {
   getTargetWords,
   highlightNextBoard,
   initialState,
-  normalizeHistory,
 } from "..";
 import { range } from "../../util";
-import { NUM_BOARDS, WORDS_VALID } from "../consts";
+import { NUM_BOARDS, PRACTICE_MODE_MIN_ID, WORDS_VALID } from "../consts";
 
 export type GameState = {
   // Daily Duotrigordle number (seed for target words)
@@ -47,6 +47,23 @@ export type GameState = {
 };
 export type GameMode = "daily" | "practice" | "historic";
 export type Challenge = "normal" | "sequence" | "jumble" | "perfect";
+export type GameStartOptions =
+  | {
+      gameMode: "daily";
+      challenge: Challenge;
+      timestamp: number;
+    }
+  | {
+      gameMode: "practice";
+      challenge: Challenge;
+      timestamp: number;
+    }
+  | {
+      gameMode: "historic";
+      id: number;
+      challenge: Challenge;
+      timestamp: number;
+    };
 
 export const gameInitialState: GameState = {
   id: 0,
@@ -64,26 +81,12 @@ export const gameInitialState: GameState = {
 };
 
 export const gameAction = {
-  load: createAction<{ game: GameState }>("game/loadGame"),
+  loadSave: createAction<{
+    timestamp: number;
+    challenge: "normal" | "sequence" | "jumble";
+  }>("game/loadSave"),
   // Start a Daily game
-  start: createAction<
-    | {
-        gameMode: "daily";
-        challenge: Challenge;
-        timestamp: number;
-      }
-    | {
-        gameMode: "practice";
-        challenge: Challenge;
-        timestamp: number;
-      }
-    | {
-        gameMode: "historic";
-        id: number;
-        challenge: Challenge;
-        timestamp: number;
-      }
-  >("game/startGame"),
+  start: createAction<GameStartOptions>("game/startGame"),
   // Restart the current game
   restart: createAction<{ timestamp: number }>("game/restart"),
   inputLetter: createAction<{ letter: string }>("game/inputLetter"),
@@ -95,72 +98,56 @@ export const gameReducer = createReducer(
   () => initialState,
   (builder) =>
     builder
-      .addCase(gameAction.load, (state, action) => {
-        state.game = action.payload.game;
-        state.ui.highlightedBoard = null;
-      })
-      .addCase(gameAction.start, (state, action) => {
-        const id =
-          action.payload.gameMode === "daily"
-            ? getDailyId(action.payload.timestamp)
-            : action.payload.gameMode === "practice"
-            ? getPracticeId(action.payload.timestamp)
-            : action.payload.id;
-        const targets = getTargetWords(id);
-        const guesses =
-          action.payload.challenge === "jumble"
-            ? getJumbleWords(targets, action.payload.timestamp)
-            : [];
+      .addCase(gameAction.loadSave, (state, action) => {
+        const gameSave = state.storage.daily[action.payload.challenge];
+        if (!gameSave) {
+          return;
+        }
+        if (getDailyId(action.payload.timestamp) !== gameSave.id) {
+          return;
+        }
+        const id = gameSave.id;
+        const challenge = action.payload.challenge;
+        const targets = getTargetWords(id, challenge);
+        const guesses = gameSave.guesses;
         const colors = getAllGuessColors(targets, guesses);
         const deductions = getAllDeductions(guesses, colors);
         const autosolves = getAllAutosolves(targets, colors, deductions);
-        const startTime = guesses.length > 0 ? action.payload.timestamp : 0;
 
         state.game = {
           id,
-          gameMode: action.payload.gameMode,
-          challenge: action.payload.challenge,
+          gameMode: "daily",
+          challenge,
           targets,
           guesses,
           colors,
           deductions,
-          autosolves,
+          startTime: gameSave.startTime,
+          endTime: gameSave.endTime,
           input: "",
-          gameOver: false,
-          startTime,
-          endTime: 0,
+          gameOver: getIsGameOver(targets, guesses, challenge),
         };
         state.ui.highlightedBoard = null;
       })
+      .addCase(gameAction.start, (state, action) => {
+        state.game = startGame(action.payload);
+        state.ui.highlightedBoard = null;
+      })
       .addCase(gameAction.restart, (state, action) => {
-        const id =
-          state.game.gameMode === "daily"
-            ? getDailyId(action.payload.timestamp)
-            : state.game.gameMode === "practice"
-            ? getPracticeId(action.payload.timestamp)
-            : state.game.id;
-        const targets = getTargetWords(id);
-        const guesses =
-          state.game.challenge === "jumble"
-            ? getJumbleWords(targets, action.payload.timestamp)
-            : [];
-        const colors = getAllGuessColors(targets, guesses);
-        const deductions = getAllDeductions(guesses, colors);
-        const startTime = guesses.length > 0 ? action.payload.timestamp : 0;
-
-        state.game = {
-          id,
-          gameMode: state.game.gameMode,
-          challenge: state.game.challenge,
-          targets,
-          guesses,
-          colors,
-          deductions,
-          input: "",
-          gameOver: false,
-          startTime,
-          endTime: 0,
-        };
+        const options =
+          state.game.gameMode === "daily" || state.game.gameMode === "practice"
+            ? {
+                gameMode: state.game.gameMode,
+                challenge: state.game.challenge,
+                timestamp: action.payload.timestamp,
+              }
+            : {
+                gameMode: state.game.gameMode,
+                id: state.game.id,
+                challenge: state.game.challenge,
+                timestamp: action.payload.timestamp,
+              };
+        state.game = startGame(options);
         state.ui.highlightedBoard = null;
       })
       .addCase(gameAction.inputLetter, (state, action) => {
@@ -218,12 +205,9 @@ export const gameReducer = createReducer(
                 ? game.guesses.length
                 : null,
               time: game.endTime - game.startTime,
+              challenge: game.challenge,
             };
-            const newHistory = state.stats.history.filter(
-              (x) => x.id !== entry.id
-            );
-            newHistory.push(entry);
-            state.stats.history = normalizeHistory(newHistory);
+            state.stats.history = addHistoryEntry(state.stats.history, entry);
           }
 
           // Clear board highlights
@@ -241,5 +225,46 @@ export const gameReducer = createReducer(
             highlightNextBoard(state);
           }
         }
+
+        // Save game state
+        if (game.gameMode === "daily" && game.challenge !== "perfect") {
+          state.storage.daily[game.challenge] = {
+            id: game.id,
+            guesses: game.guesses,
+            startTime: game.startTime,
+            endTime: game.endTime,
+          };
+        }
       })
 );
+
+// Extract logic to its own function, since this is used in
+// start and restart
+function startGame(options: GameStartOptions): GameState {
+  const id =
+    options.gameMode === "daily"
+      ? getDailyId(options.timestamp)
+      : options.gameMode === "practice"
+      ? getPracticeId(options.timestamp)
+      : options.id;
+  const targets = getTargetWords(id, options.challenge);
+  const guesses =
+    options.challenge === "jumble"
+      ? getJumbleWords(targets, id + PRACTICE_MODE_MIN_ID)
+      : [];
+  const colors = getAllGuessColors(targets, guesses);
+  const startTime = guesses.length > 0 ? options.timestamp : 0;
+
+  return {
+    id,
+    gameMode: options.gameMode,
+    challenge: options.challenge,
+    targets,
+    guesses,
+    colors,
+    input: "",
+    gameOver: false,
+    startTime,
+    endTime: 0,
+  };
+}

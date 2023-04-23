@@ -19,10 +19,14 @@ type ModalState = "about" | "settings" | "stats" | null;
 type SideEffect = {
   id: number;
 } & SideEffectAction;
-type SideEffectAction = {
-  type: "scroll-board-into-view";
-  board: number;
-};
+type SideEffectAction =
+  | {
+      type: "scroll-board-into-view";
+      board: number;
+    }
+  | {
+      type: "show-changelog-tab";
+    };
 
 export const uiInitialState: UiState = {
   view: "welcome",
@@ -88,6 +92,9 @@ export const uiReducer = createReducer(
         );
       })
       .addCase(uiAction.highlightArrow, (state, action) => {
+        if (state.game.challenge === "sequence") {
+          return;
+        }
         if (action.payload.direction === "left") {
           highlightPreviousBoard(state);
         } else {

@@ -10,6 +10,7 @@ export type SettingsState = {
   hideEmptyRows: boolean;
   stickyInput: boolean;
   showHints: boolean;
+  swapBackspaceEnter: boolean;
   performDeductions: boolean;
   hideAds: boolean;
   kofiEmail: string | null;
@@ -20,9 +21,10 @@ export const settingsInitialState: SettingsState = {
   wideMode: false,
   hideCompletedBoards: false,
   disableAnimations: false,
-  hideEmptyRows: false,
+  hideEmptyRows: true,
   stickyInput: true,
   showHints: true,
+  swapBackspaceEnter: false,
   performDeductions: true,
   hideAds: false,
   kofiEmail: null,
