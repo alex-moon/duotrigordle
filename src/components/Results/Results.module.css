@@ -26,7 +26,7 @@
 .row {
   display: flex;
   gap: 8px;
-  overflow-x: scroll;
+  overflow-x: auto;
 }
 
 .share {
@@ -59,4 +59,5 @@
   cursor: pointer;
   font-size: 16px;
   padding: 4px;
+  color: var(--white);
 }
