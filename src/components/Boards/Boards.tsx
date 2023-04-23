@@ -48,6 +48,7 @@ function Board(props: BoardProps) {
   );
   const guessColors = useAppSelector((s) => s.game.colors[props.idx]);
   const deductions = useAppSelector((s) => s.game.deductions[props.idx]);
+  const autosolves = useAppSelector((s) => s.game.autosolves[props.idx]);
   const hideBoard = useAppSelector((s) => s.settings.hideCompletedBoards);
   const hideEmptyRows = useAppSelector((s) => s.settings.hideEmptyRows);
   const challenge = useAppSelector((s) => s.game.challenge);

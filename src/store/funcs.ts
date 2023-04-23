@@ -64,6 +64,14 @@ export function getAllGuessColors(
   );
 }
 
+export function getAutosolve(
+    target: string,
+    colors: string[],
+    deduction: string
+): string|null {
+  return null;
+}
+
 export function getDeductions(
     guesses: string[],
     colors: string[]
@@ -126,6 +134,14 @@ export function getAllDeductions(
     colors: string[][]
 ): string[] {
   return colors.map(color => getDeductions(guesses, color));
+}
+
+export function getAllAutosolves(
+    targets: string[],
+    colors: string[][],
+    deductions: string[],
+): (string|null)[] {
+  return targets.map((target, i) => getAutosolve(target, colors[i], deductions[i]));
 }
 
 // Returns whether each board is completed

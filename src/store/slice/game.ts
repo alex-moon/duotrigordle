@@ -2,6 +2,7 @@ import { createAction, createReducer } from "@reduxjs/toolkit";
 import {
   getAllGuessColors,
   getAllDeductions,
+  getAllAutosolves,
   getAllWordsGuessed,
   getCompletedBoards,
   getDailyId,
@@ -35,6 +36,8 @@ export type GameState = {
   colors: string[][];
   // Deduced letters e.g. "   EF" (indexed by board)
   deductions: string[];
+  // List of autosolves (indexed by board)
+  autosolves: string[];
   // Whether or not the game is finished
   gameOver: boolean;
   // Start timestamp (milliseconds from unix epoch)
@@ -54,6 +57,7 @@ export const gameInitialState: GameState = {
   targets: range(NUM_BOARDS).map((_) => "AAAAA"),
   colors: range(NUM_BOARDS).map(() => []),
   deductions: range(NUM_BOARDS).map((_) => "     "),
+  autosolves: [],
   gameOver: false,
   startTime: 0,
   endTime: 0,
@@ -109,6 +113,7 @@ export const gameReducer = createReducer(
             : [];
         const colors = getAllGuessColors(targets, guesses);
         const deductions = getAllDeductions(guesses, colors);
+        const autosolves = getAllAutosolves(targets, colors, deductions);
         const startTime = guesses.length > 0 ? action.payload.timestamp : 0;
 
         state.game = {
@@ -119,6 +124,7 @@ export const gameReducer = createReducer(
           guesses,
           colors,
           deductions,
+          autosolves,
           input: "",
           gameOver: false,
           startTime,
