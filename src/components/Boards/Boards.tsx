@@ -176,16 +176,15 @@ type InputRowProps = {
 function InputRow(props: InputRowProps) {
   const { guesses, colors, deduction } = props;
   const showHints = useAppSelector((s) => s.settings.showHints);
-  const performDeductions = useAppSelector((s) => s.settings.performDeductions);
   const input = useAppSelector((s) => s.game.input);
   const sticky = useAppSelector((s) => s.settings.stickyInput);
 
   const ghostLetters = useMemo(
     () =>
       showHints
-          ? getGhostLetters(guesses, colors, performDeductions ? deduction : null)
+          ? getGhostLetters(guesses, colors, deduction)
           : range(5).map(() => ""),
-    [showHints, guesses, colors, performDeductions, deduction]
+    [showHints, guesses, colors, deduction]
   );
 
   const isError = input.length === 5 && !WORDS_VALID.has(input);

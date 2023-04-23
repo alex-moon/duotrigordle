@@ -20,7 +20,6 @@ export function Settings() {
     stickyInput,
     showHints,
     swapBackspaceEnter,
-    performDeductions,
   } = useAppSelector((s) => s.settings);
 
   return (
@@ -131,19 +130,6 @@ export function Settings() {
             <p className={styles.name}>Swap Backspace/Enter</p>
             <p className={styles.description}>
               Makes keyboard consistent with Wordle
-            </p>
-          </label>
-        </div>
-        <div className={styles.setting}>
-          <Checkbox
-              checked={performDeductions}
-              onChange={(x) => dispatch(settingsAction.update({ performDeductions: x }))}
-              id="deductions"
-          />
-          <label className={styles.label} htmlFor="deductions">
-            <p className={styles.name}>Perform Deductions</p>
-            <p className={styles.description}>
-              Solve yellow letters whose placement can be deduced.
             </p>
           </label>
         </div>
