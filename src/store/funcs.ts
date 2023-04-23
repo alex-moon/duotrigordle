@@ -74,18 +74,37 @@ export function getAllGuessColors(
 }
 
 export function getAutosolve(
-    target: string,
     colors: string[],
-    deduction: string
-): string|null {
-  return null;
+    deductions: string[]
+): number {
+  const solved = range(5).map(x => false);
+  for (let guess = 0; guess < colors.length; guess ++) {
+    const color = colors[guess];
+    // explicitly exclude human solves
+    if (color === 'GGGGG') {
+      return -1;
+    }
+
+    const deduction = deductions[guess];
+    for (let i = 0; i < 5; i++) {
+      if (color[i] === 'G' || deduction[i] !== ' ') {
+        solved[i] = true;
+      }
+    }
+    if (solved.filter(x => !x).length === 0) {
+      return guess;
+    }
+  }
+
+  return -1;
 }
 
-export function getDeductions(
+export function getDeduction(
     guesses: string[],
     colors: string[]
 ): string {
   const deductions: string[] = range(5).map(x => ' ');
+
   // build a map of yellow letters to positions in the row
   // (false means "can't be in this cell")
   const map: {[key: string]: boolean[]} = {};
@@ -138,27 +157,49 @@ export function getDeductions(
   return deductions.join('');
 }
 
+export function getDeductions(
+    guesses: string[],
+    colors: string[]
+): string[] {
+  // We have to get the state of the deductions at each guess to determine
+  // at which guess the board was auto-solved
+  const deductions = [];
+  for (let i = 0; i < guesses.length; i++) {
+    deductions.push(getDeduction(
+        guesses.slice(0, i + 1),
+        colors.slice(0, i + 1)
+    ));
+  }
+  return deductions;
+}
+
 export function getAllDeductions(
     guesses: string[],
     colors: string[][]
-): string[] {
+): string[][] {
   return colors.map(color => getDeductions(guesses, color));
 }
 
 export function getAllAutosolves(
-    targets: string[],
     colors: string[][],
-    deductions: string[],
-): (string|null)[] {
-  return targets.map((target, i) => getAutosolve(target, colors[i], deductions[i]));
+    deductions: string[][],
+): number[] {
+  return colors.map((target, i) => getAutosolve(
+      colors[i],
+      deductions[i]
+  ));
 }
 
 // Returns whether each board is completed
 export function getCompletedBoards(
   targets: string[],
-  guesses: string[]
+  guesses: string[],
+  autosolves: number[]
 ): boolean[] {
-  return targets.map((target) => guesses.includes(target));
+  return targets.map(
+      (target, i) =>
+          guesses.includes(target) || autosolves[i] > -1
+  );
 }
 
 // Returns the number of boards that are completed
@@ -173,8 +214,8 @@ export function getCompletedBoardsCount(
 }
 
 // Check if every target word has been guessed
-export function getAllWordsGuessed(targets: string[], guesses: string[]) {
-  return getCompletedBoards(targets, guesses).indexOf(false) === -1;
+export function getAllWordsGuessed(targets: string[], guesses: string[], autosolves: number[]) {
+  return getCompletedBoards(targets, guesses, autosolves).indexOf(false) === -1;
 }
 
 // Generate 3 random words
@@ -219,9 +260,13 @@ export function getPracticeId(seed: number) {
 }
 
 // Returns the current visible board for the sequence challenge
-export function getSequenceVisibleBoard(targets: string[], guesses: string[]) {
+export function getSequenceVisibleBoard(
+    targets: string[],
+    guesses: string[],
+    autosolves: number[]
+) {
   for (let i = 0; i < targets.length; i++) {
-    if (!guesses.includes(targets[i])) {
+    if (!guesses.includes(targets[i]) && autosolves[i] < 0) {
       return i;
     }
   }
@@ -304,8 +349,9 @@ export function getWarnHint(
 export function getIsGameOver(
   targets: string[],
   guesses: string[],
+  autosolves: number[],
   challenge: Challenge
 ) {
   const maxGuesses = challenge === "perfect" ? NUM_BOARDS : NUM_GUESSES;
-  return getAllWordsGuessed(targets, guesses) || guesses.length >= maxGuesses;
+  return getAllWordsGuessed(targets, guesses, autosolves) || guesses.length >= maxGuesses;
 }

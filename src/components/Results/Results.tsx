@@ -21,6 +21,7 @@ export function Results() {
   const id = useAppSelector((s) => s.game.id);
   const targets = useAppSelector((s) => s.game.targets);
   const guesses = useAppSelector((s) => s.game.guesses);
+  const autosolves = useAppSelector((s) => s.game.autosolves);
   const showTimer = useAppSelector((s) => s.settings.showTimer);
   const timeElapsed = useAppSelector((s) => s.game.endTime - s.game.startTime);
   const wideMode = useAppSelector((s) => s.settings.wideMode);
@@ -33,6 +34,7 @@ export function Results() {
       id,
       targets,
       guesses,
+      autosolves,
       showTimer,
       timeElapsed
     );
@@ -66,7 +68,7 @@ export function Results() {
     );
   };
 
-  const win = getAllWordsGuessed(targets, guesses);
+  const win = getAllWordsGuessed(targets, guesses, autosolves);
 
   return (
     <div
@@ -108,6 +110,7 @@ function getShareableText(
   id: number,
   targets: string[],
   guesses: string[],
+  autosolves: number[],
   showTimer: boolean,
   timeElapsed: number
 ) {
@@ -139,7 +142,7 @@ function getShareableText(
   text += "\n";
 
   // Guesses
-  const guessCount = getAllWordsGuessed(targets, guesses)
+  const guessCount = getAllWordsGuessed(targets, guesses, autosolves)
     ? guesses.length
     : "X";
   const maxGuesses = challenge === "perfect" ? NUM_BOARDS : NUM_GUESSES;

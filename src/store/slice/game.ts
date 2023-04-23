@@ -14,7 +14,7 @@ import {
   getPracticeId,
   getTargetWords,
   highlightNextBoard,
-  initialState,
+  initialState, getAutosolve,
 } from "..";
 import { range } from "../../util";
 import { NUM_BOARDS, PRACTICE_MODE_MIN_ID, WORDS_VALID } from "../consts";
@@ -34,10 +34,10 @@ export type GameState = {
   targets: string[];
   // Word colors e.g. "BBYGG" (indexed by board, row)
   colors: string[][];
-  // Deduced letters e.g. "   EF" (indexed by board)
-  deductions: string[];
-  // List of autosolves (indexed by board)
-  autosolves: string[];
+  // Deduced letters e.g. "   EF" (indexed by board, row)
+  deductions: string[][];
+  // When the board was autosolved (indexed by board, -1 if not autosolved)
+  autosolves: number[];
   // Whether or not the game is finished
   gameOver: boolean;
   // Start timestamp (milliseconds from unix epoch)
@@ -73,7 +73,7 @@ export const gameInitialState: GameState = {
   guesses: [],
   targets: range(NUM_BOARDS).map((_) => "AAAAA"),
   colors: range(NUM_BOARDS).map(() => []),
-  deductions: range(NUM_BOARDS).map((_) => "     "),
+  deductions: range(NUM_BOARDS).map(() => []),
   autosolves: [],
   gameOver: false,
   startTime: 0,
@@ -112,7 +112,7 @@ export const gameReducer = createReducer(
         const guesses = gameSave.guesses;
         const colors = getAllGuessColors(targets, guesses);
         const deductions = getAllDeductions(guesses, colors);
-        const autosolves = getAllAutosolves(targets, colors, deductions);
+        const autosolves = getAllAutosolves(colors, deductions);
 
         state.game = {
           id,
@@ -122,10 +122,11 @@ export const gameReducer = createReducer(
           guesses,
           colors,
           deductions,
+          autosolves,
           startTime: gameSave.startTime,
           endTime: gameSave.endTime,
           input: "",
-          gameOver: getIsGameOver(targets, guesses, challenge),
+          gameOver: getIsGameOver(targets, guesses, autosolves, challenge),
         };
         state.ui.highlightedBoard = null;
       })
@@ -186,14 +187,16 @@ export const gameReducer = createReducer(
           const colors = getGuessColors(game.targets[i], guess);
           game.colors[i].push(colors);
           game.deductions[i] = getDeductions(game.guesses, game.colors[i]);
+          game.autosolves[i] = getAutosolve(game.colors[i], game.deductions[i]);
         }
+
         // Start timer on first guess
         if (game.guesses.length === 1) {
           game.startTime = action.payload.timestamp;
         }
 
         // Check if game over
-        if (getIsGameOver(game.targets, game.guesses, game.challenge)) {
+        if (getIsGameOver(game.targets, game.guesses, game.autosolves, game.challenge)) {
           game.gameOver = true;
           game.endTime = action.payload.timestamp;
 
@@ -201,7 +204,7 @@ export const gameReducer = createReducer(
           if (game.gameMode === "daily") {
             const entry = {
               id: game.id,
-              guesses: getAllWordsGuessed(game.targets, game.guesses)
+              guesses: getAllWordsGuessed(game.targets, game.guesses, game.autosolves)
                 ? game.guesses.length
                 : null,
               time: game.endTime - game.startTime,
@@ -216,7 +219,8 @@ export const gameReducer = createReducer(
           // Check if highlighted board is invalid, then shift right until it isn't
           const completedBoards = getCompletedBoards(
             game.targets,
-            game.guesses
+            game.guesses,
+            game.autosolves
           );
           if (
             state.ui.highlightedBoard !== null &&
@@ -253,6 +257,8 @@ function startGame(options: GameStartOptions): GameState {
       ? getJumbleWords(targets, id + PRACTICE_MODE_MIN_ID)
       : [];
   const colors = getAllGuessColors(targets, guesses);
+  const deductions = getAllDeductions(guesses, colors);
+  const autosolves = getAllAutosolves(colors, deductions);
   const startTime = guesses.length > 0 ? options.timestamp : 0;
 
   return {
@@ -262,6 +268,8 @@ function startGame(options: GameStartOptions): GameState {
     targets,
     guesses,
     colors,
+    deductions,
+    autosolves,
     input: "",
     gameOver: false,
     startTime,

@@ -109,6 +109,10 @@
   background: var(--green);
   color: var(--black);
 }
+.cell.pink {
+  background: var(--pink);
+  color: var(--black);
+}
 .cell.sticky {
   position: sticky;
 }
@@ -138,6 +142,7 @@
 .boards.colorBlind .cell.textYellow {
   color: var(--blue);
 }
+/* @todo colorblind support for pink? */
 
 .letter {
   user-select: none;

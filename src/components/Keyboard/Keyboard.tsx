@@ -86,6 +86,7 @@ function Key(props: KeyProps) {
 
   const targets = useAppSelector((s) => s.game.targets);
   const guesses = useAppSelector((s) => s.game.guesses);
+  const autosolves = useAppSelector((s) => s.game.autosolves);
   const guessColors = useAppSelector((s) => s.game.colors);
   const wideMode = useAppSelector((s) => s.settings.wideMode);
   const hideCompletedBoards = useAppSelector(
@@ -100,6 +101,7 @@ function Key(props: KeyProps) {
         props.char,
         targets,
         guesses,
+        autosolves,
         guessColors,
         wideMode,
         hideCompletedBoards,
@@ -131,6 +133,7 @@ function generateStyles(
   char: string,
   targets: string[],
   guesses: string[],
+  autosolves: number[],
   guessColors: string[][],
   wideMode: boolean,
   hideCompletedBoards: boolean,
@@ -154,7 +157,7 @@ function generateStyles(
     if (highlightedBoard !== null) {
       idx = highlightedBoard;
     } else if (challenge === "sequence") {
-      idx = getSequenceVisibleBoard(targets, guesses);
+      idx = getSequenceVisibleBoard(targets, guesses, autosolves);
     } else {
       throw new Error("unreachable");
     }
@@ -196,7 +199,7 @@ function generateStyles(
   // instead increment the pad count
   let colors = [];
   let pad = 0;
-  const completedBoards = getCompletedBoards(targets, guesses);
+  const completedBoards = getCompletedBoards(targets, guesses, autosolves);
   for (let board = 0; board < targets.length; board++) {
     // Check if board is complete
     if (completedBoards[board]) {

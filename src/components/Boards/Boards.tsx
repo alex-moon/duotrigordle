@@ -48,7 +48,9 @@ function Board(props: BoardProps) {
   );
   const guessColors = useAppSelector((s) => s.game.colors[props.idx]);
   const deductions = useAppSelector((s) => s.game.deductions[props.idx]);
-  const autosolves = useAppSelector((s) => s.game.autosolves[props.idx]);
+  const deduction = deductions.length > 0 ? deductions[deductions.length - 1] : '     ';
+  const autosolves = useAppSelector((s) => s.game.autosolves);
+  const autosolvedAt = autosolves[props.idx];
   const hideBoard = useAppSelector((s) => s.settings.hideCompletedBoards);
   const hideEmptyRows = useAppSelector((s) => s.settings.hideEmptyRows);
   const challenge = useAppSelector((s) => s.game.challenge);
@@ -57,14 +59,14 @@ function Board(props: BoardProps) {
   const target = targets[props.idx];
   const isConcealed = useMemo(() => {
     if (challenge === "sequence") {
-      return props.idx > getSequenceVisibleBoard(targets, guesses);
+      return props.idx > getSequenceVisibleBoard(targets, guesses, autosolves);
     } else {
       return false;
     }
-  }, [challenge, props.idx, targets, guesses]);
-  const guessedAt = guesses.indexOf(target);
-  const complete = guessedAt !== -1;
-  const coloredCount = complete ? guessedAt + 1 : guesses.length;
+  }, [challenge, props.idx, targets, guesses, autosolves]);
+  const solvedAt = Math.max(guesses.indexOf(target), autosolvedAt);
+  const complete = solvedAt !== -1;
+  const coloredCount = complete ? solvedAt + 1 : guesses.length;
   const showInput = !complete && !gameOver && !isConcealed;
   const maxGuesses = challenge === "perfect" ? NUM_BOARDS : NUM_GUESSES;
   const emptyCount = hideEmptyRows
@@ -90,6 +92,13 @@ function Board(props: BoardProps) {
     }
   }, [disableAnimations, dispatch, props.idx, sideEffect]);
 
+  const words = guesses.map((guess, i) => {
+    return autosolvedAt === i ? target : guess;
+  });
+  const colors = guessColors.map((color, i) => {
+    return autosolvedAt === i ? 'PPPPP' : color;
+  });
+
   return (
     <div
       className={cn(
@@ -102,12 +111,12 @@ function Board(props: BoardProps) {
     >
       <div ref={scrollRef} className={styles.scrollIntoView} />
       <ColoredRows
-        words={guesses}
-        colors={guessColors}
+        words={words}
+        colors={colors}
         count={coloredCount}
         concealed={isConcealed}
       />
-      {showInput ? <InputRow guesses={guesses} colors={guessColors} deductions={deductions} /> : null}
+      {showInput ? <InputRow guesses={guesses} colors={guessColors} deduction={deduction} /> : null}
       <EmptyRows count={emptyCount} />
     </div>
   );
@@ -162,10 +171,10 @@ const EmptyRows = React.memo(function EmptyRows(props: EmptyRowsProps) {
 type InputRowProps = {
   guesses: string[];
   colors: string[];
-  deductions: string;
+  deduction: string;
 };
 function InputRow(props: InputRowProps) {
-  const { guesses, colors, deductions } = props;
+  const { guesses, colors, deduction } = props;
   const showHints = useAppSelector((s) => s.settings.showHints);
   const performDeductions = useAppSelector((s) => s.settings.performDeductions);
   const input = useAppSelector((s) => s.game.input);
@@ -174,9 +183,9 @@ function InputRow(props: InputRowProps) {
   const ghostLetters = useMemo(
     () =>
       showHints
-          ? getGhostLetters(guesses, colors, performDeductions ? deductions : null)
+          ? getGhostLetters(guesses, colors, performDeductions ? deduction : null)
           : range(5).map(() => ""),
-    [showHints, guesses, colors, performDeductions, deductions]
+    [showHints, guesses, colors, performDeductions, deduction]
   );
 
   const isError = input.length === 5 && !WORDS_VALID.has(input);
@@ -198,7 +207,7 @@ function InputRow(props: InputRowProps) {
           if (input[i]) {
             textColor = isError ? "red" : isWarn ? "yellow" : undefined;
           } else {
-            textColor = deductions[i] !== " " ? "pink" : ghostLetters[i] ? "ghost" : undefined;
+            textColor = deduction[i] !== " " ? "pink" : ghostLetters[i] ? "ghost" : undefined;
           }
         }
         return (
@@ -211,7 +220,7 @@ function InputRow(props: InputRowProps) {
 
 type CellProps = {
   char?: string;
-  color?: "B" | "Y" | "G";
+  color?: "B" | "Y" | "G" | "P";
   textColor?: "red" | "yellow" | "ghost" | "pink";
   sticky?: boolean;
 };
@@ -223,6 +232,7 @@ const Cell = React.memo(function Cell(props: CellProps) {
         props.color === "B" && styles.black,
         props.color === "Y" && styles.yellow,
         props.color === "G" && styles.green,
+        props.color === "P" && styles.pink,
         props.textColor === "red" && styles.textRed,
         props.textColor === "yellow" && styles.textYellow,
         props.textColor === "ghost" && styles.textGhost,

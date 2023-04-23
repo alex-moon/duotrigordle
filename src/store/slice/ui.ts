@@ -61,11 +61,13 @@ export const uiReducer = createReducer(
       .addCase(uiAction.highlightClick, (state, action) => {
         const completedBoards = getCompletedBoards(
           state.game.targets,
-          state.game.guesses
+          state.game.guesses,
+          state.game.autosolves
         );
         const sequenceVisibleBoard = getSequenceVisibleBoard(
           state.game.targets,
-          state.game.guesses
+          state.game.guesses,
+          state.game.autosolves
         );
         if (
           state.ui.view !== "game" ||
@@ -131,7 +133,8 @@ export function highlightNextBoard(state: AppState) {
   }
   const completedBoards = getCompletedBoards(
     state.game.targets,
-    state.game.guesses
+    state.game.guesses,
+    state.game.autosolves
   );
   for (let i = 0; i < NUM_BOARDS; i++) {
     if (!completedBoards[idx]) {
@@ -157,7 +160,8 @@ export function highlightPreviousBoard(state: AppState) {
   }
   const completedBoards = getCompletedBoards(
     state.game.targets,
-    state.game.guesses
+    state.game.guesses,
+    state.game.autosolves
   );
   for (let i = 0; i < NUM_BOARDS; i++) {
     if (!completedBoards[idx]) {

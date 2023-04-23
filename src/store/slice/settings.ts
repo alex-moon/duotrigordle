@@ -35,13 +35,13 @@ export const settingsAction = {
 };
 
 export const settingsReducer = createReducer(
-  () => initialState,
-  (builder) => {
-    builder.addCase(settingsAction.update, (state, action) => {
-      state.settings = {
-        ...state.settings,
-        ...action.payload,
-      };
-    });
-  }
+    () => initialState,
+    (builder) => {
+      builder.addCase(settingsAction.update, (state, action) => {
+        state.settings = {
+          ...state.settings,
+          ...action.payload,
+        };
+      });
+    }
 );

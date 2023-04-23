@@ -1,17 +1,17 @@
 import cn from "classnames";
 import { useEffect, useState } from "react";
 import {
-  Challenge,
-  gameAction,
-  getCompletedBoardsCount,
-  getDailyId,
-  getIsGameOver,
-  getTargetWords,
-  NUM_BOARDS,
-  storageAction,
-  uiAction,
-  useAppDispatch,
-  useAppSelector,
+    Challenge,
+    gameAction, getAllAutosolves, getAllDeductions, getAllGuessColors,
+    getCompletedBoardsCount,
+    getDailyId,
+    getIsGameOver,
+    getTargetWords,
+    NUM_BOARDS,
+    storageAction,
+    uiAction,
+    useAppDispatch,
+    useAppSelector,
 } from "../../store";
 import { range } from "../../util";
 import { LinkButton } from "../common/LinkButton/LinkButton";
@@ -102,8 +102,11 @@ function DailyLink(props: DailyLinkProps) {
 
   const targets = getTargetWords(gameSave.id, props.challenge);
   const guesses = gameSave.guesses;
+  const colors = getAllGuessColors(targets, guesses);
+  const deductions = getAllDeductions(guesses, colors);
+  const autosolves = getAllAutosolves(colors, deductions);
   const boardsComplete = getCompletedBoardsCount(targets, guesses);
-  const gameOver = getIsGameOver(targets, guesses, props.challenge);
+  const gameOver = getIsGameOver(targets, guesses, autosolves, props.challenge);
 
   return (
     <div className={styles.gameMode}>

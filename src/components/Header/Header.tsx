@@ -241,9 +241,10 @@ function Row3() {
   const dispatch = useAppDispatch();
   const targets = useAppSelector((s) => s.game.targets);
   const guesses = useAppSelector((s) => s.game.guesses);
+  const autosolves = useAppSelector((s) => s.game.autosolves);
   const highlightedBoard = useAppSelector((s) => s.ui.highlightedBoard);
   const boardsCompleted = useMemo(
-    () => getCompletedBoards(targets, guesses),
+    () => getCompletedBoards(targets, guesses, autosolves),
     [targets, guesses]
   );
 
