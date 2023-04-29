@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# @todo this won't work for more than one image
+
 doctl auth init --context=ajmoon
 
 /snap/bin/doctl registry login --context=ajmoon || exit 9
@@ -19,6 +21,6 @@ ssh ajmoon "
     docker system prune -f
 " || exit 9
 
-doctl registry repo list-tags $1 --context=ajmoon \
+doctl registry repo list-tags duotrigordle --context=ajmoon \
     | grep -o "sha256.*" \
     | xargs doctl registry repo delete-manifest -f --context=ajmoon duotrigordle
