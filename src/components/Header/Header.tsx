@@ -19,7 +19,6 @@ import {
   useAppSelector,
 } from "../../store";
 import { formatTimeElapsed, range } from "../../util";
-import { AdBox } from "../AdBox/AdBox";
 import { Button } from "../common/Button/Button";
 import styles from "./Header.module.css";
 
@@ -28,6 +27,7 @@ export function Header() {
   const wideMode = useAppSelector((s) => s.settings.wideMode);
   const colorBlind = useAppSelector((s) => s.settings.colorBlindMode);
 
+  // @todo link back to ajmoon.com
   return (
     <div
       className={cn(
@@ -37,7 +37,6 @@ export function Header() {
         colorBlind && styles.colorBlind
       )}
     >
-      <AdBox />
       <Row1 />
       <Row2 />
       <Row3 />
@@ -180,19 +179,13 @@ function Row2() {
   const targets = useAppSelector((s) => s.game.targets);
   const guesses = useAppSelector((s) => s.game.guesses);
   const autosolves = useAppSelector((s) => s.game.autosolves);
-  const gameOver = useAppSelector((s) => s.game.gameOver);
   const boardsCompleted = useMemo(
     () => getCompletedBoardsCount(targets, guesses, autosolves),
-    [guesses, targets]
+    [guesses, targets, autosolves]
   );
   const challenge = useAppSelector((s) => s.game.challenge);
   const numGuesses = guesses.length;
   const maxGuesses = challenge === "perfect" ? NUM_BOARDS : NUM_GUESSES;
-  const extraGuessesNum =
-    maxGuesses - NUM_BOARDS - (numGuesses - boardsCompleted);
-  const cannotWin = extraGuessesNum < 0;
-  const extraGuesses =
-    extraGuessesNum > 0 ? "+" + extraGuessesNum : extraGuessesNum;
 
   return (
     <div className={styles.row2}>
@@ -200,8 +193,8 @@ function Row2() {
         Boards: {boardsCompleted}/{NUM_BOARDS}
       </span>
       <Timer />
-      <span className={cn(cannotWin && !gameOver && styles.red)}>
-        Guesses: {numGuesses}/{maxGuesses} ({extraGuesses})
+      <span>
+        Guesses: {numGuesses}/{maxGuesses}
       </span>
     </div>
   );
@@ -246,7 +239,7 @@ function Row3() {
   const highlightedBoard = useAppSelector((s) => s.ui.highlightedBoard);
   const boardsCompleted = useMemo(
     () => getCompletedBoards(targets, guesses, autosolves),
-    [targets, guesses]
+    [targets, guesses, autosolves]
   );
 
   return (

@@ -27,9 +27,9 @@ export function App() {
   if (window.top !== window) {
     return (
       <p>
-        Play Duotrigordle at{" "}
-        <a href="https://duotrigordle.com" target="_blank" rel="noreferrer">
-          https://duotrigordle.com
+        Play Autosolving Duotrigordle at{" "}
+        <a href="https://duotrigordle.ajmoon.com" target="_blank" rel="noreferrer">
+          duotrigordle.ajmoon.com
         </a>
       </p>
     );

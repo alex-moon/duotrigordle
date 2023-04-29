@@ -178,7 +178,7 @@ function getShareableText(
   }
 
   // Link
-  text += "https://duotrigordle.com/";
+  text += "https://duotrigordle.ajmoon.com/";
 
   return text;
 }

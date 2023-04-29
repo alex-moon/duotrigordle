@@ -3,4 +3,5 @@ services:
   duotrigordle:
     build: .
     ports:
-      - 8080:8080
+      - "10000:8080"
+    image: registry.digitalocean.com/ajmoon/duotrigordle:live
