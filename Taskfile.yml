@@ -10,7 +10,7 @@ tasks:
       app: duotrigordle
     cmds:
       - |
-        ssh ajmoon "
+        ssh -t ajmoon "
             if [[ ! -d '/opt/$app' ]]; then
               mkdir /opt/$app
               cd /opt/$app
